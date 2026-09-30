@@ -6,7 +6,6 @@ Easy to read and easy to explain.
 
 import numpy as np
 from sklearn.cluster import DBSCAN, KMeans
-from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
 
 class SimpleAnomalyDetector:
@@ -19,14 +18,9 @@ class SimpleAnomalyDetector:
         
         # 3. DBSCAN: Flags isolated points as noise (-1)
         self.dbscan = DBSCAN(eps=1.5, min_samples=3)
-
-        # 4. KNN (k-Nearest Neighbors): Evaluates distance to k=3 nearest normal neighbors
-        self.knn = NearestNeighbors(n_neighbors=3)
         
         # Distance threshold for K-Means (calculated during training)
         self.kmeans_threshold = 2.5
-        # Distance threshold for KNN (calculated during training)
-        self.knn_threshold = 2.0
         
         # Scaled baseline points for DBSCAN density evaluation
         self.baseline_scaled = None
@@ -52,10 +46,9 @@ class SimpleAnomalyDetector:
         
         baseline_data = np.column_stack([durations, src_bytes, dst_bytes, counts])
         
-        # Fit scaler, K-Means, and KNN
+        # Fit scaler and K-Means
         scaled_data = self.scaler.fit_transform(baseline_data)
         self.kmeans.fit(scaled_data)
-        self.knn.fit(scaled_data)
         self.baseline_scaled = scaled_data[:50]
         
         # Find maximum normal distance to cluster center
@@ -66,11 +59,6 @@ class SimpleAnomalyDetector:
         
         # Any distance higher than 95% of normal packets is considered an anomaly
         self.kmeans_threshold = float(np.percentile(distances, 95))
-
-        # Calculate KNN normal distance threshold
-        knn_dists, _ = self.knn.kneighbors(scaled_data)
-        avg_knn_dists = np.mean(knn_dists, axis=1)
-        self.knn_threshold = float(np.percentile(avg_knn_dists, 95))
         
         # Add a few initial points to history so graphs aren't empty
         self.history = []
@@ -87,10 +75,6 @@ class SimpleAnomalyDetector:
                 "distance": round(dist, 2),
                 "kmeans_result": "Normal",
                 "kmeans_outlier": False,
-                "knn_distance": round(float(avg_knn_dists[i]), 2),
-                "knn_threshold": round(self.knn_threshold, 2),
-                "knn_result": "Normal",
-                "knn_outlier": False,
                 "dbscan_label": 0,
                 "dbscan_result": "Normal Cluster",
                 "dbscan_noise": False,
@@ -118,15 +102,10 @@ class SimpleAnomalyDetector:
         db_labels = self.dbscan.fit_predict(all_points)
         latest_label = int(db_labels[-1])
         db_is_noise = bool(latest_label == -1)
-
-        # --- 3. KNN DISTANCE CHECK ---
-        knn_dists, _ = self.knn.kneighbors(scaled)
-        avg_knn_dist = float(np.mean(knn_dists[0]))
-        knn_is_outlier = bool(avg_knn_dist > self.knn_threshold)
         
         # --- FINAL VERDICT ---
-        # Flagged if K-Means or DBSCAN or KNN marks it as an anomaly
-        is_threat = bool(km_is_outlier or db_is_noise or knn_is_outlier)
+        # Flagged if K-Means or DBSCAN marks it as an anomaly
+        is_threat = bool(km_is_outlier or db_is_noise)
         
         result = {
             "id": pkt_id,
@@ -140,10 +119,6 @@ class SimpleAnomalyDetector:
             "dbscan_label": latest_label,
             "dbscan_result": "Noise (-1)" if db_is_noise else "Cluster",
             "dbscan_noise": db_is_noise,
-            "knn_distance": round(avg_knn_dist, 2),
-            "knn_threshold": round(self.knn_threshold, 2),
-            "knn_result": "Outlier" if knn_is_outlier else "Normal",
-            "knn_outlier": knn_is_outlier,
             "is_anomaly": is_threat
         }
         
@@ -192,12 +167,6 @@ class SimpleAnomalyDetector:
                 "noise": db_noise,
                 "eps": 1.5,
                 "min_samples": 3
-            },
-            "knn": {
-                "k": 3,
-                "threshold": round(self.knn_threshold, 2),
-                "outliers": sum(1 for p in self.history if p.get("knn_outlier", False)),
-                "normal": sum(1 for p in self.history if not p.get("knn_outlier", False))
             },
             "comparison": {
                 "both_safe": both_normal,

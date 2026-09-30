@@ -1,5 +1,5 @@
 /**
- * K-Means, KNN, and DBSCAN Classroom Presentation Simulator & Dashboards
+ * K-Means and DBSCAN Classroom Presentation Simulator & Dashboards
  */
 
 let currentTab = "simulator";
@@ -26,13 +26,11 @@ const SIMULATION_STEPS = [
     `,
     kmeansStatus: "Distance: 1.15 < 2.45 (Inlier)",
     kmeansClass: "text-blue-700",
-    knnStatus: "Neighbor Dist: 0.82 < 2.00 (Normal)",
-    knnClass: "text-emerald-700",
     dbscanStatus: "Dense Cluster (Core Point)",
     dbscanClass: "text-purple-700",
   },
   {
-    phase: "Phase 2: Demonstrating Distance-Based Check (K-Means & KNN)",
+    phase: "Phase 2: Demonstrating Distance-Based Check (K-Means)",
     stepLabel: "Step 2 of 6",
     progress: "33.3%",
     trafficType: "normal",
@@ -42,12 +40,10 @@ const SIMULATION_STEPS = [
       <b>🗣️ What to tell your class:</b><br>
       "Look at the left chart: <b>Distance-Based Detection</b>. 
       K-Means has trained two cluster centroids (<b>C0</b> and <b>C1</b>) representing normal traffic centers. 
-      Meanwhile, <b>KNN</b> calculates the mean distance to the 3 nearest neighbors. Because normal packets cluster closely together, both Euclidean distances remain comfortably below the threshold line."
+      Because normal packets cluster closely around their assigned centroid, the Euclidean distance remains comfortably below the red threshold line."
     `,
     kmeansStatus: "Distance: 1.34 < 2.45 (Inlier)",
     kmeansClass: "text-blue-700",
-    knnStatus: "Neighbor Dist: 0.95 < 2.00 (Normal)",
-    knnClass: "text-emerald-700",
     dbscanStatus: "Dense Cluster (Core Point)",
     dbscanClass: "text-purple-700",
   },
@@ -66,8 +62,6 @@ const SIMULATION_STEPS = [
     `,
     kmeansStatus: "Distance: 1.08 < 2.45 (Inlier)",
     kmeansClass: "text-blue-700",
-    knnStatus: "Neighbor Dist: 0.78 < 2.00 (Normal)",
-    knnClass: "text-emerald-700",
     dbscanStatus: "Dense Cluster (Core Point)",
     dbscanClass: "text-purple-700",
   },
@@ -82,13 +76,11 @@ const SIMULATION_STEPS = [
       <b>🗣️ What to tell your class:</b><br>
       "<b>ATTACK SIMULATION #1!</b> An attacker is running a rapid Port Scan probing multiple ports in seconds.
       Watch how the models react:
-      1) In <b>K-Means & KNN</b>: The distance to the nearest centroid and neighbors spikes above the red threshold line!
+      1) In <b>K-Means</b>: The distance to the nearest centroid spikes above the red threshold line!
       2) In <b>DBSCAN</b>: The packet lands in an empty coordinate space with 0 neighbors inside radius &epsilon;. DBSCAN isolates it as <b>Noise (-1)</b>!"
     `,
     kmeansStatus: "⚠️ Outlier (Dist > 2.45 Threshold)",
     kmeansClass: "text-rose-700 font-extrabold",
-    knnStatus: "⚠️ Distance Spike (Outlier)",
-    knnClass: "text-rose-700 font-extrabold",
     dbscanStatus: "⚠️ Isolated Noise (-1) Flagged",
     dbscanClass: "text-purple-700 font-extrabold",
   },
@@ -104,13 +96,10 @@ const SIMULATION_STEPS = [
       "<b>ATTACK SIMULATION #2!</b> A severe Denial-of-Service SYN Flood hits the server: 500 connections with 0 returned bytes!
       Look at the telemetry:
       • <b>K-Means Euclidean distance</b> explodes to over 150 (way above the 2.45 threshold!).
-      • <b>KNN distance</b> confirms total isolation from all baseline peers.
       • <b>DBSCAN</b> confirms 0 neighbors in radius &epsilon; and flags it as Noise (-1)!"
     `,
     kmeansStatus: "🚨 Extreme Outlier (Dist > 150)",
     kmeansClass: "text-rose-700 font-extrabold",
-    knnStatus: "🚨 Extreme Distance (> 10x normal)",
-    knnClass: "text-rose-700 font-extrabold",
     dbscanStatus: "🚨 Noise (-1) Zero Density",
     dbscanClass: "text-purple-700 font-extrabold",
   },
@@ -124,13 +113,11 @@ const SIMULATION_STEPS = [
     script: `
       <b>🗣️ Conclusion for your presentation:</b><br>
       "This brings us to the final consensus: 
-      By combining <b>Distance-based algorithms (K-Means & KNN)</b> with <b>Density-based algorithms (DBSCAN)</b>, our security system achieves dual verification without false alarms. 
+      By combining <b>Distance-based algorithms (K-Means)</b> with <b>Density-based algorithms (DBSCAN)</b>, our security system achieves dual verification without false alarms. 
       Both models independently detected the threat, allowing the automated firewall to drop the malicious packets before they reach internal servers!"
     `,
     kmeansStatus: "✅ Verified Outlier",
     kmeansClass: "text-rose-700 font-bold",
-    knnStatus: "✅ Verified Distance Anomaly",
-    knnClass: "text-rose-700 font-bold",
     dbscanStatus: "✅ Verified Density Noise (-1)",
     dbscanClass: "text-purple-700 font-bold",
   },
@@ -144,7 +131,6 @@ function switchTab(tabId) {
     dual: document.getElementById("viewDual"),
     kmeans: document.getElementById("viewKmeans"),
     dbscan: document.getElementById("viewDbscan"),
-    knn: document.getElementById("viewKnn"),
     matrix: document.getElementById("viewMatrix"),
   };
 
@@ -153,7 +139,6 @@ function switchTab(tabId) {
     dual: document.getElementById("tabBtnDual"),
     kmeans: document.getElementById("tabBtnKmeans"),
     dbscan: document.getElementById("tabBtnDbscan"),
-    knn: document.getElementById("tabBtnKnn"),
     matrix: document.getElementById("tabBtnMatrix"),
   };
 
@@ -206,8 +191,6 @@ function updateUI(data) {
     renderKmeansDashboard(data);
   } else if (currentTab === "dbscan") {
     renderDbscanDashboard(data);
-  } else if (currentTab === "knn") {
-    renderKnnDashboard(data);
   } else if (currentTab === "matrix") {
     renderMatrixView(data);
   }
@@ -235,9 +218,6 @@ function applySimulationStep(stepIndex) {
 
   document.getElementById("simKmeansStatus").textContent = step.kmeansStatus;
   document.getElementById("simKmeansStatus").className = `text-xs font-extrabold ${step.kmeansClass}`;
-
-  document.getElementById("simKnnStatus").textContent = step.knnStatus;
-  document.getElementById("simKnnStatus").className = `text-xs font-extrabold ${step.knnClass}`;
 
   document.getElementById("simDbscanStatus").textContent = step.dbscanStatus;
   document.getElementById("simDbscanStatus").className = `text-xs font-extrabold ${step.dbscanClass}`;
@@ -358,13 +338,13 @@ function updatePlayButtonUI() {
 function renderSimulatorView(data) {
   const km = data.kmeans || { centers: [], threshold: 2.45 };
 
-  // 1. Simulator Left Chart (K-Means & KNN)
+  // 1. Simulator Left Chart (K-Means Centroids)
   const kmInliersX = [], kmInliersY = [];
   const kmOutliersX = [], kmOutliersY = [];
   const centers = km.centers || [];
 
   data.history.forEach((p) => {
-    if (p.kmeans_outlier || p.knn_outlier) {
+    if (p.kmeans_outlier) {
       kmOutliersX.push(p.x);
       kmOutliersY.push(p.y);
     } else {
@@ -827,126 +807,7 @@ function renderDbscanDashboard(data) {
 }
 
 // ============================================================================
-// DEDICATED KNN DISTANCE DASHBOARD RENDERING
-// ============================================================================
-function renderKnnDashboard(data) {
-  const knn = data.knn || { k: 3, threshold: 2.0, normal: 0, outliers: 0 };
-
-  document.getElementById("knnThresholdVal").textContent = knn.threshold.toFixed(2);
-  document.getElementById("knnTotalVal").textContent = data.total;
-  document.getElementById("knnNormalVal").textContent = knn.normal;
-  document.getElementById("knnOutliersVal").textContent = knn.outliers;
-
-  const normalX = [], normalY = [];
-  const outlierX = [], outlierY = [];
-
-  data.history.forEach((p) => {
-    if (p.knn_outlier) {
-      outlierX.push(p.x);
-      outlierY.push(p.y);
-    } else {
-      normalX.push(p.x);
-      normalY.push(p.y);
-    }
-  });
-
-  const knnTraces = [
-    {
-      x: normalX,
-      y: normalY,
-      mode: "markers",
-      name: "Normal (Close to k-NN)",
-      marker: { color: "#10b981", size: 9, opacity: 0.8 },
-    },
-    {
-      x: outlierX,
-      y: outlierY,
-      mode: "markers",
-      name: "k-NN Distance Outlier",
-      marker: { color: "#e11d48", size: 12, symbol: "x" },
-    },
-  ];
-
-  const knnLayout = {
-    margin: { t: 20, r: 20, b: 35, l: 35 },
-    paper_bgcolor: "#ffffff",
-    plot_bgcolor: "#f8fafc",
-    xaxis: { title: "src_bytes (scaled)", showgrid: true, zeroline: false },
-    yaxis: { title: "dst_bytes (scaled)", showgrid: true, zeroline: false },
-    legend: { orientation: "h", y: 1.15, x: 0 },
-  };
-
-  Plotly.react("knnDedicatedChart", knnTraces, knnLayout, { responsive: true, displayModeBar: false });
-
-  // KNN Distance Bar Chart
-  const recentPackets = data.history.slice(-15);
-  const pktIds = recentPackets.map((p) => p.id);
-  const dists = recentPackets.map((p) => p.knn_distance || 0.0);
-  const barColors = recentPackets.map((p) => (p.knn_outlier ? "#e11d48" : "#10b981"));
-
-  const barTrace = {
-    x: pktIds,
-    y: dists,
-    type: "bar",
-    name: "Average k-NN Distance",
-    marker: { color: barColors },
-  };
-
-  const distLayout = {
-    margin: { t: 25, r: 15, b: 35, l: 30 },
-    paper_bgcolor: "#ffffff",
-    plot_bgcolor: "#f8fafc",
-    yaxis: { title: "Mean Distance (k=3)" },
-    shapes: [
-      {
-        type: "line",
-        xref: "paper",
-        x0: 0,
-        x1: 1,
-        yref: "y",
-        y0: knn.threshold,
-        y1: knn.threshold,
-        line: { color: "#e11d48", width: 2, dash: "dash" },
-      },
-    ],
-    annotations: [
-      {
-        xref: "paper",
-        x: 0.95,
-        y: knn.threshold,
-        text: `Threshold (${knn.threshold})`,
-        showarrow: false,
-        font: { size: 10, color: "#e11d48" },
-        yshift: 10,
-      },
-    ],
-  };
-
-  Plotly.react("knnDistanceChart", [barTrace], distLayout, { responsive: true, displayModeBar: false });
-
-  // KNN Table
-  const rows = [...data.history].reverse().slice(0, 10).map((p) => {
-    const isOutlier = p.knn_outlier;
-    const badge = isOutlier
-      ? `<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 font-bold">⚠️ DISTANCE OUTLIER</span>`
-      : `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">NORMAL PEER</span>`;
-
-    return `
-      <tr class="hover:bg-slate-50 transition">
-        <td class="p-3 font-mono font-bold">${p.id}</td>
-        <td class="p-3">${p.type}</td>
-        <td class="p-3 font-mono ${isOutlier ? 'text-rose-600 font-bold' : 'text-slate-600'}">${p.knn_distance !== undefined ? p.knn_distance : "-"}</td>
-        <td class="p-3 font-mono text-slate-500">${knn.threshold}</td>
-        <td class="p-3">${badge}</td>
-      </tr>
-    `;
-  });
-
-  document.getElementById("knnTableBody").innerHTML = rows.join("");
-}
-
-// ============================================================================
-// MODEL AGREEMENT MATRIX RENDERING
+// MODEL AGREEMENT MATRIX RENDERING (K-MEANS vs DBSCAN)
 // ============================================================================
 function renderMatrixView(data) {
   const cmp = data.comparison || {
@@ -964,7 +825,6 @@ function renderMatrixView(data) {
   const rows = [...data.history].reverse().slice(0, 12).map((p) => {
     const kmOutlier = p.kmeans_outlier || p.kmeans_result === "Outlier";
     const dbNoise = p.dbscan_noise || p.dbscan_result === "Noise (-1)";
-    const knnOutlier = p.knn_outlier;
 
     let consensus = "";
     if (!kmOutlier && !dbNoise) {
@@ -984,7 +844,6 @@ function renderMatrixView(data) {
         <td class="p-3 font-mono font-bold">${p.id}</td>
         <td class="p-3">${p.type}</td>
         <td class="p-3 font-semibold ${kmOutlier ? 'text-rose-600' : 'text-blue-600'}">${kmOutlier ? 'Outlier' : 'Normal'}</td>
-        <td class="p-3 font-semibold ${knnOutlier ? 'text-rose-600' : 'text-emerald-600'}">${knnOutlier ? 'Outlier' : 'Normal'}</td>
         <td class="p-3 font-semibold ${dbNoise ? 'text-purple-600' : 'text-emerald-600'}">${dbNoise ? 'Noise (-1)' : 'Cluster'}</td>
         <td class="p-3">${consensus}</td>
         <td class="p-3">${finalBadge}</td>
@@ -1032,8 +891,6 @@ window.addEventListener("resize", () => {
     "kmeansDistanceChart",
     "dbscanDedicatedChart",
     "dbscanDonutChart",
-    "knnDedicatedChart",
-    "knnDistanceChart",
   ];
   chartIds.forEach((id) => {
     const el = document.getElementById(id);
