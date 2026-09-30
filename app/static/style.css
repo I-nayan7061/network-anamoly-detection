@@ -1,0 +1,41 @@
+/* Clean and Modern UI Styling */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f8fafc;
+}
+
+/* Tab button smooth transition */
+.tab-btn {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tab-btn:hover {
+  background-color: rgba(241, 245, 249, 0.7);
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+
+/* Smooth button transitions */
+button {
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* Clean scrollbar for tables */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
